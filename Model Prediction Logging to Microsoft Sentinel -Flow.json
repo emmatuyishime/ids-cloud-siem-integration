@@ -1,0 +1,357 @@
+[
+    {
+        "id": "dc2b723e90f0b286",
+        "type": "tab",
+        "label": "Flow 7",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "bfa2b9182b865508",
+        "type": "group",
+        "z": "dc2b723e90f0b286",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "mqtt_in",
+            "func_sentinel",
+            "http_out",
+            "debug_log",
+            "47f91387042fb7f1",
+            "4175e871b36c5c1e"
+        ],
+        "x": 154,
+        "y": 219,
+        "w": 892,
+        "h": 202
+    },
+    {
+        "id": "a443cd9f5264772c",
+        "type": "group",
+        "z": "dc2b723e90f0b286",
+        "style": {
+            "stroke": "#999999",
+            "stroke-opacity": "1",
+            "fill": "none",
+            "fill-opacity": "1",
+            "label": true,
+            "label-position": "nw",
+            "color": "#a4a4a4"
+        },
+        "nodes": [
+            "9ec4651a2fa3366d",
+            "0e9d11186e369b7e",
+            "c0c2ee3278773c39",
+            "942dba52c0050545",
+            "9a4618d8cadef7f7",
+            "fada8e056168372e"
+        ],
+        "x": 154,
+        "y": 539,
+        "w": 892,
+        "h": 202
+    },
+    {
+        "id": "mqtt_in",
+        "type": "mqtt in",
+        "z": "dc2b723e90f0b286",
+        "g": "bfa2b9182b865508",
+        "name": "Model / Prediction",
+        "topic": "model/prediction_fog",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "57f9815f9f431e32",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 270,
+        "y": 360,
+        "wires": [
+            [
+                "func_sentinel",
+                "4175e871b36c5c1e"
+            ]
+        ]
+    },
+    {
+        "id": "func_sentinel",
+        "type": "function",
+        "z": "dc2b723e90f0b286",
+        "g": "bfa2b9182b865508",
+        "name": "Sentinel Payload",
+        "func": "const crypto = global.get('crypto');\n\nconst workspaceId = \"b2816e23-5b1a-4fb0-91a9-b9deb28d86f5\";\nconst sharedKey = \"seps13QoWHsK84u2oWIZqOblw1bWTC774jRK/43nLO7SdI4yi5rG4i7PJ8OYFvCgsSQSeZK/xwR8sTZtSLqc0w==\";\n\nconst mode = msg.payload.mode || \"unknown\";\nconst logType = (mode === \"multi\") ? \"IIoTPredictions_Multi\" : \"IIoTPredictions_Binary\";\n\nconst jsonBody = JSON.stringify({\n    timestamp: new Date().toISOString(),\n    mode: msg.payload.mode,\n    prediction: msg.payload.prediction,\n    raw_prediction: msg.payload.raw_prediction,\n    class: msg.payload.class || null,\n    true_label: msg.payload.true_label,\n    source_ip: msg.payload.source_ip,\n    node_id: msg.payload.node_id,\n    sensor_id: msg.payload.sensor_id\n\n});\n\nconst method = \"POST\";\nconst contentType = \"application/json\";\nconst resource = \"/api/logs\";\nconst rfc1123date = new Date().toUTCString();\nconst contentLength = Buffer.byteLength(jsonBody, 'utf8');\n\nconst stringToHash = method + \"\\n\" + contentLength + \"\\n\" + contentType + \"\\nx-ms-date:\" + rfc1123date + \"\\n\" + resource;\nconst decodedKey = Buffer.from(sharedKey, 'base64');\nconst encodedHash = crypto.createHmac('sha256', decodedKey).update(stringToHash, 'utf8').digest('base64');\nconst signature = \"SharedKey \" + workspaceId + \":\" + encodedHash;\n\n//  necessary headers\nmsg.headers = {\n    \"Content-Type\": contentType,\n    \"Authorization\": signature,\n    \"Log-Type\": logType,\n    \"x-ms-date\": rfc1123date,\n    \"time-generated-field\": \"timestamp\"\n};\n\nmsg.payload = jsonBody;\nmsg.method = \"POST\";\nmsg.url = `https://${workspaceId}.ods.opinsights.azure.com${resource}?api-version=2016-04-01`;\n\nnode.warn(\"Sending to Sentinel:\");\nnode.warn({ url: msg.url, headers: msg.headers, payload: msg.payload });\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 320,
+        "wires": [
+            [
+                "http_out",
+                "47f91387042fb7f1"
+            ]
+        ]
+    },
+    {
+        "id": "http_out",
+        "type": "http request",
+        "z": "dc2b723e90f0b286",
+        "g": "bfa2b9182b865508",
+        "name": "Send to Sentinel",
+        "method": "use",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 740,
+        "y": 340,
+        "wires": [
+            [
+                "debug_log"
+            ]
+        ]
+    },
+    {
+        "id": "debug_log",
+        "type": "debug",
+        "z": "dc2b723e90f0b286",
+        "g": "bfa2b9182b865508",
+        "name": "Log Response",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 920,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "47f91387042fb7f1",
+        "type": "debug",
+        "z": "dc2b723e90f0b286",
+        "g": "bfa2b9182b865508",
+        "name": "debug 21",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 760,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "4175e871b36c5c1e",
+        "type": "debug",
+        "z": "dc2b723e90f0b286",
+        "g": "bfa2b9182b865508",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 480,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "5ff43cf832d04842",
+        "type": "comment",
+        "z": "dc2b723e90f0b286",
+        "name": "FOG-Model Predicitons Logging to Azure",
+        "info": "",
+        "x": 540,
+        "y": 180,
+        "wires": [],
+        "icon": "font-awesome/fa-long-arrow-up"
+    },
+    {
+        "id": "aa7eb8a5c0243f28",
+        "type": "comment",
+        "z": "dc2b723e90f0b286",
+        "name": "EDGE-Model Predicitons Logging to Azure",
+        "info": "",
+        "x": 540,
+        "y": 500,
+        "wires": [],
+        "icon": "font-awesome/fa-long-arrow-up"
+    },
+    {
+        "id": "9ec4651a2fa3366d",
+        "type": "mqtt in",
+        "z": "dc2b723e90f0b286",
+        "g": "a443cd9f5264772c",
+        "name": "Model / Prediction_edge",
+        "topic": "model/predictionedge",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "57f9815f9f431e32",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 290,
+        "y": 680,
+        "wires": [
+            [
+                "0e9d11186e369b7e",
+                "fada8e056168372e"
+            ]
+        ]
+    },
+    {
+        "id": "0e9d11186e369b7e",
+        "type": "function",
+        "z": "dc2b723e90f0b286",
+        "g": "a443cd9f5264772c",
+        "name": "Sentinel Payload",
+        "func": "const crypto = global.get('crypto');\n\nconst workspaceId = \"163425ad-5662-453b-af87-315bf7f184ba\";\nconst sharedKey = \"pnkfBlNZwUF92Mjz5d/nsdOP2qeQxJyUS2nWrGUnekM2SOuaIjzFJSI1p5shlgWZKMylFXW3qMAy9GmhMq7hGQ==\";\n\nconst mode = msg.payload.mode || \"unknown\";\nconst logType = (mode === \"multi\") ? \"IIoTPredictions_Multi_edge\" : \"IIoTPredictions_Binary_edge\";\n\nconst jsonBody = JSON.stringify({\n    timestamp: new Date().toISOString(),\n    mode: msg.payload.mode,\n    prediction: msg.payload.prediction,\n    raw_prediction: msg.payload.raw_prediction,\n    class: msg.payload.class || null,\n    true_label: msg.payload.true_label,\n    source_ip: msg.payload.source_ip,\n    node_id: msg.payload.node_id,\n    sensor_id: msg.payload.sensor_id\n\n});\n\nconst method = \"POST\";\nconst contentType = \"application/json\";\nconst resource = \"/api/logs\";\nconst rfc1123date = new Date().toUTCString();\nconst contentLength = Buffer.byteLength(jsonBody, 'utf8');\n\nconst stringToHash = method + \"\\n\" + contentLength + \"\\n\" + contentType + \"\\nx-ms-date:\" + rfc1123date + \"\\n\" + resource;\nconst decodedKey = Buffer.from(sharedKey, 'base64');\nconst encodedHash = crypto.createHmac('sha256', decodedKey).update(stringToHash, 'utf8').digest('base64');\nconst signature = \"SharedKey \" + workspaceId + \":\" + encodedHash;\n\n//  necessary headers\nmsg.headers = {\n    \"Content-Type\": contentType,\n    \"Authorization\": signature,\n    \"Log-Type\": logType,\n    \"x-ms-date\": rfc1123date,\n    \"time-generated-field\": \"timestamp\"\n};\n\nmsg.payload = jsonBody;\nmsg.method = \"POST\";\nmsg.url = `https://${workspaceId}.ods.opinsights.azure.com${resource}?api-version=2016-04-01`;\n\nnode.warn(\"Sending to Sentinel:\");\nnode.warn({ url: msg.url, headers: msg.headers, payload: msg.payload });\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 640,
+        "wires": [
+            [
+                "c0c2ee3278773c39",
+                "9a4618d8cadef7f7"
+            ]
+        ]
+    },
+    {
+        "id": "c0c2ee3278773c39",
+        "type": "http request",
+        "z": "dc2b723e90f0b286",
+        "g": "a443cd9f5264772c",
+        "name": "Send to Sentinel",
+        "method": "use",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 740,
+        "y": 660,
+        "wires": [
+            [
+                "942dba52c0050545"
+            ]
+        ]
+    },
+    {
+        "id": "942dba52c0050545",
+        "type": "debug",
+        "z": "dc2b723e90f0b286",
+        "g": "a443cd9f5264772c",
+        "name": "Log Response",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 920,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "9a4618d8cadef7f7",
+        "type": "debug",
+        "z": "dc2b723e90f0b286",
+        "g": "a443cd9f5264772c",
+        "name": "debug 5",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 760,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "fada8e056168372e",
+        "type": "debug",
+        "z": "dc2b723e90f0b286",
+        "g": "a443cd9f5264772c",
+        "name": "debug 6",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 480,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "57f9815f9f431e32",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "localhost",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    }
+]
