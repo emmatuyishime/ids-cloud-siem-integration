@@ -17,7 +17,7 @@ The **integration architecture** comprises of:
 
 ## Contents
 
-### 🔹 Node-RED SIEM Integration Workflows
+###  Node-RED SIEM Integration Workflows
 
 - **`Model Prediction Logging to Microsoft Sentinel -Flow.json`**
 
@@ -32,7 +32,7 @@ The workflow supports both:
 - **Fog-level model predictions**
 - **Edge-level model predictions**
 
-### 🔹 Payload Construction and Secure Offloading Logic
+###  Payload Construction and Secure Offloading Logic
 
 - **`Predictions Payload.js`**
 
@@ -43,11 +43,11 @@ This JavaScript logic:
 - Supports privacy-aware payload construction prior to cloud offloading
 - Ensures compatibility with Microsoft Sentinel ingestion endpoints
 
-### 🔹 Configuration Artifacts
+###  Configuration Artifacts
 
 - **`Cloud SIEM & Components Deployment Configuration File`**
 
-### 🔹 Graphical Flow Representation
+###  Graphical Flow Representation
 
 To improve readability the repository includes a **snap** of the deployed Node-RED workflow:
 
