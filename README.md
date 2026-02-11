@@ -54,4 +54,4 @@ To improve readability the repository includes a **snap** of the deployed Node-R
 - **Model Predictions Logging to Microsoft Sentinel – Flow (PNG)**
 
 ## License
-Released under the **MIT License**. See `LICENSE` for details.
+Released under the **MIT License**. See [LICENSE](LICENSE) for details.
